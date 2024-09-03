@@ -10,7 +10,7 @@ interface User {
 
 }
 
-export default function page() {
+export default function Page() {
 
     const [users, setUsers] = useState<User[]>([])
     const [name, setName ] = useState<string>('')
