@@ -1,22 +1,41 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
-const prisma = new PrismaClient()
+// Initialize Prisma client only once
+const prisma = global.prisma || new PrismaClient();
 
-export default async function page(req: any, res: any)
-{
-    if(req.method ==='POST')
-    {
-        const { name, email } = req.body
+// Cache Prisma client in global object to avoid multiple instances in serverless environments
+if (process.env.NODE_ENV === 'development') {
+    global.prisma = prisma;
+}
 
-        const user = await prisma.user.create({
-            data: { name, email }
-        })
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+    try {
+        if (req.method === 'POST') {
+            const { name, email } = req.body as { name: string; email: string };
 
-        res.status(200).json(user)
-    } else if (req.method === 'GET')
-    {
-        const users = await prisma.user.findMany()
+            if (!name || !email) {
+                return res.status(400).json({ error: 'Name and email are required' });
+            }
 
-        res.status(200).json(users)
+            // Create a new user
+            const user = await prisma.user.create({
+                data: { name, email },
+            });
+
+            return res.status(201).json(user); // 201 for successful resource creation
+        } else if (req.method === 'GET') {
+            // Retrieve all users
+            const users = await prisma.user.findMany();
+            return res.status(200).json(users);
+        } else {
+            // Handle other HTTP methods (e.g., PUT, DELETE)
+            res.setHeader('Allow', ['POST', 'GET']);
+            return res.status(405).end(`Method ${req.method} Not Allowed`);
+        }
+    } catch (error) {
+        // Log the error for debugging
+        console.error('API error:', error);
+        return res.status(500).json({ error: 'Internal Server Error' });
     }
 }
