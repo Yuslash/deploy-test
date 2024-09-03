@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body 
+{
+  display: flex;
+  background-color: blueviolet;
+  padding: 20px 26px;
+
+}
